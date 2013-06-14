@@ -22,11 +22,13 @@ import java.util.Random;
 import javax.microedition.lcdui.Choice;
 import javax.microedition.lcdui.ChoiceGroup;
 import javax.microedition.lcdui.Command;
+import javax.microedition.lcdui.StringItem;
 import javax.microedition.lcdui.TextField;
 
 import org.jboss.totp.Base32;
 import org.jboss.totp.Context;
 import org.jboss.totp.HMACAlgorithm;
+import org.jboss.totp.Hex;
 import org.jboss.totp.Token;
 
 /**
@@ -39,6 +41,7 @@ public class TokenConfigurationForm extends AbstractForm {
 
     private final TextField txtName = new TextField("Name", null, 255, TextField.ANY);
     private final TextField txtSecretBase32 = new TextField("Key (Base32)", null, 255, TextField.ANY);
+    private final StringItem strSecretHex = new StringItem("Key (HEX)", null);
     private final TextField txtTimeStep = new TextField("Time Step (sec)", "30", 3, TextField.NUMERIC);
     private final TextField txtPassCodeLength = new TextField("Number of Digits", "6", 1, TextField.NUMERIC);
     private final TextField txtTimeDelta = new TextField("Time Correction (sec)", "0", 3, TextField.NUMERIC);
@@ -54,6 +57,7 @@ public class TokenConfigurationForm extends AbstractForm {
 
         append(txtName);
         append(txtSecretBase32);
+        append(strSecretHex);
         append(txtTimeStep);
         append(txtPassCodeLength);
         append(txtTimeDelta);
@@ -71,6 +75,7 @@ public class TokenConfigurationForm extends AbstractForm {
     protected void handleScreen(Command c) {
         byte[] newKey = generateNewKey();
         txtSecretBase32.setString(Base32.encode(newKey));
+        strSecretHex.setText(Hex.toHexString(newKey, 0, newKey.length));
     }
 
     protected void handleOk(Command c) {
@@ -102,6 +107,7 @@ public class TokenConfigurationForm extends AbstractForm {
         if (token == null) {
             txtName.setString("");
             txtSecretBase32.setString("");
+            strSecretHex.setText("");
             txtTimeStep.setString("30");
             txtPassCodeLength.setString("6");
             txtTimeDelta.setString("0");
@@ -109,6 +115,7 @@ public class TokenConfigurationForm extends AbstractForm {
         } else {
             txtName.setString(token.getName());
             txtSecretBase32.setString(token.getKey());
+            strSecretHex.setText(getHexFromBase32(token.getKey()));
             txtTimeStep.setString(Integer.toString(token.getTimeStep()));
             txtTimeDelta.setString(Integer.toString(token.getTimeDelta()));
             switch(token.getHmacAlgorithm()) {
@@ -158,4 +165,8 @@ public class TokenConfigurationForm extends AbstractForm {
         return result;
     }
 
+    String getHexFromBase32(String base32Key) {
+        byte[] raw = Base32.decode(base32Key);
+        return Hex.toHexString(raw, 0, raw.length);
+    }
 }
